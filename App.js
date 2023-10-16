@@ -7,12 +7,26 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  disableNetwork,
+  enableNetwork,
+} from "firebase/firestore";
+
+// useNetInfo, which returns the latest value of the network connection state and is automatically updated whenever the connection changes.
+import { useNetInfo } from "@react-native-community/netinfo";
+
+import { useEffect } from "react";
+import { LogBox, Alert } from "react-native";
+LogBox.ignoreLogs(["AsyncStorage has been extracted from"]);
 
 //creating the navigator
 const Stack = createNativeStackNavigator();
 
+//useNetInfo() to define a new state that represents the network connectivity status
 const App = () => {
+  const connectionStatus = useNetInfo();
+
   //The web app's Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyD0TfXaokjpcVNOX5LPWaIZWSwqV4wtFA4",
@@ -34,12 +48,28 @@ const App = () => {
   // Initialize Cloud Firestore and get a reference to the service
   const db = getFirestore(app);
 
+  // throwing an error if no internet
+  useEffect(() => {
+    if (connectionStatus.isConnected === false) {
+      Alert.alert("Connection Lost!");
+      disableNetwork(db);
+    } else if (connectionStatus.isConnected === true) {
+      enableNetwork(db);
+    }
+  }, [connectionStatus.isConnected]); //This means that if this value changes, the useEffect code will be re-executed
+
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Start">
         <Stack.Screen name="Start" component={Start} />
         <Stack.Screen name="Chat">
-          {(props) => <Chat db={db} {...props} />}
+          {(props) => (
+            <Chat
+              isConnected={connectionStatus.isConnected}
+              db={db}
+              {...props}
+            />
+          )}
         </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
