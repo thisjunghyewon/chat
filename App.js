@@ -13,6 +13,8 @@ import {
   enableNetwork,
 } from "firebase/firestore";
 
+import { getStorage } from "firebase/storage";
+
 // useNetInfo, which returns the latest value of the network connection state and is automatically updated whenever the connection changes.
 import { useNetInfo } from "@react-native-community/netinfo";
 
@@ -45,8 +47,11 @@ const App = () => {
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
 
-  // Initialize Cloud Firestore and get a reference to the service
+  // Initialize Firestore Database handler
   const db = getFirestore(app);
+
+  // Initialize Firebase Storage handler
+  const storage = getStorage(app);
 
   // throwing an error if no internet
   useEffect(() => {
@@ -67,6 +72,7 @@ const App = () => {
             <Chat
               isConnected={connectionStatus.isConnected}
               db={db}
+              storage={storage}
               {...props}
             />
           )}
